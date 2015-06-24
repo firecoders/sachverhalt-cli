@@ -1,0 +1,16 @@
+name:                sachverhalt-cli
+version:             0.1.0.0
+synopsis:            The client-side reference implementation of the sachverhalt protocol
+homepage:            https://github.com/firecoders/sachverhalt-cli
+license:             BSD3
+license-file:        LICENSE
+author:              shak-mar
+maintainer:          shakmar@openmailbox.org
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+library
+  build-depends:       base, network, transformers
+  hs-source-dirs:      src
+  default-language:    Haskell2010
