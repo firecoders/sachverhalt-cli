@@ -17,6 +17,8 @@ instance (Dependant String) (String, [String]) where
     dependencies = snd
 @
 
+Let's resolve a simple dependency graph:
+
 @
   A <- B     D
   ^    ^
@@ -24,10 +26,10 @@ instance (Dependant String) (String, [String]) where
      C
 @
 
-Let's resolve a simple dependency graph:
-
 >>> resolve [("B", ["A"]), ("A", []), ("C", ["B", "A"]), ("D", [])]
 Right [("A",[]),("D",[]),("B",["A"]),("C",["B","A"])]
+
+Now let's try resolving a cyclic dependency:
 
 @
    _____
@@ -39,15 +41,13 @@ Right [("A",[]),("D",[]),("B",["A"]),("C",["B","A"])]
    -----
 @
 
-Now let's try resolving a cyclic dependency:
-
 >>> resolve [("B", ["A"]), ("A", ["B"]), ("C", ["D"]), ("D", [])]
 Left ["B","A"]
 
 You can use the 'DependantPlus' typeclass if you want to express dependencies
 in the other direction as well. Example:
 
-e
+@
 data Example = Example { eIdentifier :: String
                        , eBefore     :: [String]
                        , eBehind     :: [String]
@@ -62,7 +62,7 @@ instance (DependantPlus String) Example where
     dependencyRequests = eBefore
 @
 
-Let's try it out:
+Let's try using 'resolvePlus':
 
 >>> fmap (map identifier) $ resolvePlus [Example "a" [] ["c", "d"], Example "b" ["c"] ["d"], Example "c" [] [], Example "d" [] []]
 Right ["d","b","c","a"]
@@ -82,6 +82,7 @@ module Algorithms.Dependant
 import Data.List (partition)
 import Control.Monad (forM, liftM)
 
+-- | Typeclass for all topologically sortable things
 class Dependant id a | a -> id where
     identifier :: a -> id     -- ^ Returns the unique identifier of an item
     dependencies :: a -> [id] -- ^ Returns the dependencies of an item
@@ -100,12 +101,20 @@ resolve xs = go xs []
                 then go unresolvables (resolved ++ resolvables)
                 else Left $ map identifier unresolvables
 
-resolvable :: (Dependant id a, Eq id) => [a] -> a -> Bool
+-- | Check whether all dependencies of a Dependant are in a given list.
+resolvable :: (Dependant id a, Eq id)
+           => [a]  -- ^ The list in which to look for the dependencies
+           -> a    -- ^ The Dependant whose dependencies shall be looked for
+           -> Bool -- ^ Whether all the dependencies are in the list
 resolvable xs x = all (`elem` map identifier xs) (dependencies x)
 
+-- | Typeclass for topologically sortable things that declare dependencies in
+-- the other direction as well
 class DependantPlus id a | a -> id where
-    dependencyRequests :: a -> [id] -- ^ Returns items that are requested to depend on the given item
+    dependencyRequests :: a -> [id] -- ^ Returns items that are requested to
+                                    --   depend on the given item
 
+-- | A helper type that is used to add extra dependencies to a Dependant
 data Wrap id a = Wrap a [id]
 
 instance (Dependant id a) => Dependant id (Wrap id a) where
@@ -116,7 +125,6 @@ instance (Dependant id a) => Dependant id (Wrap id a) where
 resolvePlus :: (Dependant id a, DependantPlus id a, Eq id)
             => [a]
             -> Either [id] [a]
-
 resolvePlus xs = fmap (map restore) . resolve . map addDepends $ xs
     where addDepends x = Wrap x $ depends x
           depends x = map identifier $ filter (any (== identifier x) . dependencyRequests) xs
