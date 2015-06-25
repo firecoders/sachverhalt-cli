@@ -62,12 +62,12 @@ instance (DependantPlus String) Example where
     dependencyRequests = eBefore
 @
 
-Let's try using 'resolvePlus':
+Let's try using 'resolvePlus' (second and first are from Data.Bifunctor):
 
->>> fmap (map identifier) $ resolvePlus [Example "a" [] ["c", "d"], Example "b" ["c"] ["d"], Example "c" [] [], Example "d" [] []]
+>>> second (map identifier) $ resolvePlus [Example "a" [] ["c", "d"], Example "b" ["c"] ["d"], Example "c" [] [], Example "d" [] []]
 Right ["d","b","c","a"]
 
->>> resolvePlus [Example "a" ["b"] ["b"], Example "b" [] ["c"], Example "c" [] []]
+>>> first (map identifier) $ resolvePlus [Example "a" ["b"] ["b"], Example "b" [] ["c"], Example "c" [] []]
 Left ["a","b"]
 
 -}
@@ -79,6 +79,8 @@ module Algorithms.Dependant
     , DependantPlus(..)
     ) where
 
+import Data.Either () -- for the Bifunctor instance
+import Data.Bifunctor (bimap)
 import Data.List (partition)
 import Control.Monad (forM, liftM)
 
@@ -89,9 +91,9 @@ class Dependant id a | a -> id where
 
 -- | Try to topologically sort a list of Dependants.
 resolve :: (Dependant id a, Eq id)
-        => [a]             -- ^ The list of Dependants
-        -> Either [id] [a] -- ^ Return Left with the Dependants that couldn't be
-                           --   resolved (cyclic dependency, missing dependency)
+        => [a]            -- ^ The list of Dependants
+        -> Either [a] [a] -- ^ Return Left with the Dependants that couldn't be
+                          --   resolved (cyclic dependency, missing dependency)
 resolve xs = go xs []
     where go [] xs = Right xs
           go unresolved resolved =
@@ -99,7 +101,7 @@ resolve xs = go xs []
                     partition (resolvable resolved) unresolved
             in if not . null $ resolvables
                 then go unresolvables (resolved ++ resolvables)
-                else Left $ map identifier unresolvables
+                else Left unresolvables
 
 -- | Check whether all dependencies of a Dependant are in a given list.
 resolvable :: (Dependant id a, Eq id)
@@ -124,8 +126,8 @@ instance (Dependant id a) => Dependant id (Wrap id a) where
 -- | Try to topologically sort a list of 'DependantPlus' items
 resolvePlus :: (Dependant id a, DependantPlus id a, Eq id)
             => [a]
-            -> Either [id] [a]
-resolvePlus xs = fmap (map restore) . resolve . map addDepends $ xs
+            -> Either [a] [a]
+resolvePlus xs = mapBoth (map restore) . resolve . map addDepends $ xs
     where addDepends x = Wrap x . dependencyRequesters xs $ identifier x
           restore (Wrap x _) = x
 
@@ -140,3 +142,6 @@ dependencyRequesters :: (Dependant id a, DependantPlus id a, Eq id)
                              --   declare the dependency request
 dependencyRequesters ds d = map identifier $ filter declares ds
     where declares dp = d `elem` dependencyRequests dp
+
+mapBoth :: (a -> b) -> Either a a -> Either b b
+mapBoth f e = bimap f f e
