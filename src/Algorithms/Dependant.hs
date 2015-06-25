@@ -109,7 +109,7 @@ resolvable :: (Dependant id a, Eq id)
 resolvable xs x = all (`elem` map identifier xs) (dependencies x)
 
 -- | Typeclass for topologically sortable things that declare dependencies in
--- the other direction as well
+--   the other direction as well
 class DependantPlus id a | a -> id where
     dependencyRequests :: a -> [id] -- ^ Returns items that are requested to
                                     --   depend on the given item
@@ -121,11 +121,22 @@ instance (Dependant id a) => Dependant id (Wrap id a) where
     identifier (Wrap item _) = identifier item
     dependencies (Wrap item extraIds) = extraIds ++ (dependencies item)
 
--- | Try to topologically sort a list of DependantPlus items
+-- | Try to topologically sort a list of 'DependantPlus' items
 resolvePlus :: (Dependant id a, DependantPlus id a, Eq id)
             => [a]
             -> Either [id] [a]
 resolvePlus xs = fmap (map restore) . resolve . map addDepends $ xs
-    where addDepends x = Wrap x $ depends x
-          depends x = map identifier $ filter (any (== identifier x) . dependencyRequests) xs
+    where addDepends x = Wrap x . dependencyRequesters xs $ identifier x
           restore (Wrap x _) = x
+
+-- | Pick the 'DependantPlus' items that declare a dependency request on a
+--   given Dependant.
+dependencyRequesters :: (Dependant id a, DependantPlus id a, Eq id)
+                     => [a]  -- ^ The list of 'DependantPlus' items to be checked
+                     -> id   -- ^ The Dependant id on which an item must declare
+                             --   a dependency request in order to end up in the
+                             --   result list
+                     -> [id] -- ^ The list of all identifiers whose items
+                             --   declare the dependency request
+dependencyRequesters ds d = map identifier $ filter declares ds
+    where declares dp = d `elem` dependencyRequests dp
