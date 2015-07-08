@@ -4,12 +4,13 @@ let
 
   inherit (nixpkgs) pkgs;
 
-  f = { mkDerivation, base, network, stdenv, transformers, cabal-install }:
+  f = { mkDerivation, base, network, stdenv, transformers, cabal-install,
+        aeson }:
       mkDerivation {
         pname = "sachverhalt-cli";
         version = "0.1.0.0";
         src = ./.;
-        buildDepends = [ base network transformers ];
+        buildDepends = [ base network transformers aeson ];
         buildTools = [ cabal-install ];
         homepage = "https://github.com/firecoders/sachverhalt-cli";
         description = "The client-side reference implementation of the sachverhalt protocol";
