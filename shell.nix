@@ -4,14 +4,20 @@ let
 
   inherit (nixpkgs) pkgs;
 
-  f = { mkDerivation, base, network, stdenv, transformers, cabal-install,
-        aeson }:
+  f = { cabal-install, mkDerivation, aeson, base, bytestring, lens, lens-aeson
+      , mtl, network, stdenv, text, transformers, unordered-containers
+      }:
       mkDerivation {
         pname = "sachverhalt-cli";
         version = "0.1.0.0";
         src = ./.;
-        buildDepends = [ base network transformers aeson ];
-        buildTools = [ cabal-install ];
+        buildDepends = [ cabal-install
+          aeson base bytestring lens mtl network text transformers
+          unordered-containers
+          (lens-aeson.overrideDerivation (attrs: {
+            doCheck = false;
+          }))
+        ];
         homepage = "https://github.com/firecoders/sachverhalt-cli";
         description = "The client-side reference implementation of the sachverhalt protocol";
         license = stdenv.lib.licenses.bsd3;

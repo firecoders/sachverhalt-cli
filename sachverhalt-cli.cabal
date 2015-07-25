@@ -13,6 +13,6 @@ cabal-version:       >=1.10
 library
   exposed-modules:     Sachverhalt.Client
   build-depends:       base, network, transformers, aeson, text, bytestring,
-                       unordered-containers
+                       unordered-containers, lens, lens-aeson, mtl
   hs-source-dirs:      src
   default-language:    Haskell2010

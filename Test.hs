@@ -6,9 +6,7 @@ import Control.Monad.IO.Class
 import qualified Data.Text as T
 import Data.Maybe (fromJust)
 import Network
-import Sachverhalt.Client.DefaultMain
-import Sachverhalt.Client.Monads
-import Sachverhalt.Client.Plugins
+import Sachverhalt.Client
 import System.IO
 
 t :: T.Text -> T.Text

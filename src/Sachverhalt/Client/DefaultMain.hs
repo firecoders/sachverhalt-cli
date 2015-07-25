@@ -3,6 +3,7 @@ module Sachverhalt.Client.DefaultMain
 , Configuration(..)
 ) where
 
+import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as B
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -10,7 +11,7 @@ import Control.Applicative ((<$>))
 import Control.Monad (forM_, void)
 import Sachverhalt.Client.Monads
 import Sachverhalt.Client.Plugins
-import Sachverhalt.Client.Types (Request, Response, dumpRequest, parseResponse)
+import Sachverhalt.Client.Types (dumpRequest, parseResponse)
 import System.Environment (getArgs)
 import System.IO (Handle)
 
@@ -42,7 +43,7 @@ buildInvalidRegistrationsErrmsg desc regs = unlines $
     map show regs
 
 
-sendRequest :: Configuration -> Request -> IO (Maybe Response)
+sendRequest :: Configuration -> Value -> IO (Maybe Value)
 sendRequest conf req = do
     h <- cConnect conf
     parseResponse <$> handleInteract h (dumpRequest req)
