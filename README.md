@@ -2,6 +2,9 @@
 
 #### The client-side reference implementation of the sachverhalt protocol
 
+**This project has been abandoned.**  We don’t see any reason to write another
+issue management system, as there are plenty of good options already.
+
 `sachverhalt-cli` is a command-line interface to sachverhalt written, extended
 and configured in haskell.
 
